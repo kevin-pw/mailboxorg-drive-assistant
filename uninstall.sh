@@ -36,17 +36,13 @@ if [[ "$EUID" -eq 0 ]]; then
     exit 1
 fi
 
-# shellcheck source=drive.conf
-source "${SCRIPT_DIR}/drive.conf"
+# shellcheck source=setup.conf
+source "${SCRIPT_DIR}/setup.conf"
 CURRENT_USER="$(whoami)"
-
-local version
-version="$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo 'unknown')"
 
 echo ""
 echo "================================================"
 echo "   mailbox.org Drive — Uninstall"
-echo "   Version: ${version}"
 echo "================================================"
 echo ""
 warn "This will remove the mailbox.org Drive configuration from your system."
@@ -96,6 +92,27 @@ if pkill -f "RealTimeSync" 2>/dev/null; then
 else
     info "RealTimeSync was not running"
 fi
+
+# ---------------------------------------------------------------------------
+# Stop and remove periodic sync timer
+# ---------------------------------------------------------------------------
+
+info "Removing periodic sync timer..."
+if systemctl --user is-active mailbox-drive-sync.timer &>/dev/null; then
+    systemctl --user stop mailbox-drive-sync.timer 2>/dev/null || true
+    ok "Timer stopped"
+fi
+if systemctl --user is-enabled mailbox-drive-sync.timer &>/dev/null; then
+    systemctl --user disable mailbox-drive-sync.timer 2>/dev/null || true
+    ok "Timer disabled"
+fi
+for f in mailbox-drive-sync.service mailbox-drive-sync.timer; do
+    if [[ -f "${HOME}/.config/systemd/user/${f}" ]]; then
+        rm -f "${HOME}/.config/systemd/user/${f}"
+        ok "Removed ${f}"
+    fi
+done
+systemctl --user daemon-reload 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
 # Unmount drive
@@ -219,14 +236,6 @@ fi
 
 # ---------------------------------------------------------------------------
 # Remove FreeFileSync
-#
-# FreeFileSync ships its own uninstall.sh that handles:
-#   - Removing Bin/, Resources/, binaries, docs
-#   - Removing ~/.local/bin symlinks
-#   - Unregistering MIME types, icons, .desktop entries
-#   - Cleaning up KDE service menus
-#
-# We delegate to it when available, then clean up anything it missed.
 # ---------------------------------------------------------------------------
 
 if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
@@ -236,9 +245,6 @@ if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
 
         if [[ -x "${FREEFILESYNC_INSTALL_DIR}/uninstall.sh" ]]; then
             info "Running FreeFileSync's built-in uninstaller..."
-            # The uninstaller checks it's running as the installing user.
-            # It accepts --keep-shortcuts to preserve desktop shortcuts.
-            # We let it remove everything.
             bash "${FREEFILESYNC_INSTALL_DIR}/uninstall.sh" 2>/dev/null || true
             ok "FreeFileSync uninstaller completed"
         else
@@ -251,7 +257,7 @@ if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
             info "Removed ${FREEFILESYNC_INSTALL_DIR}"
         fi
 
-        # Remove symlinks the installer creates (in case uninstall.sh missed them)
+        # Remove symlinks
         for link in "${HOME}/.local/bin/FreeFileSync" \
                      "${HOME}/.local/bin/freefilesync"; do
             if [[ -L "${link}" || -e "${link}" ]]; then
@@ -260,7 +266,7 @@ if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
             fi
         done
 
-        # Remove .desktop entries (in case uninstall.sh missed them)
+        # Remove .desktop entries
         for f in FreeFileSync.desktop RealTimeSync.desktop; do
             if [[ -f "${HOME}/.local/share/applications/${f}" ]]; then
                 rm -f "${HOME}/.local/share/applications/${f}"
@@ -268,7 +274,6 @@ if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
             fi
         done
 
-        # Refresh desktop database
         if command -v update-desktop-database &>/dev/null; then
             update-desktop-database "${HOME}/.local/share/applications" 2>/dev/null || true
         fi

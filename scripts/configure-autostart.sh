@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
-# configure-autostart.sh — Create XDG autostart entries and helper scripts
+# configure-autostart.sh — Create XDG autostart entries, helper scripts,
+#                           and a systemd user timer for periodic sync
 #
 # Provides:  configure_autostart
-# Requires:  MOUNT_POINT  FREEFILESYNC_INSTALL_DIR  HOME
+# Requires:  MOUNT_POINT  FREEFILESYNC_INSTALL_DIR  REMOTE_POLL_INTERVAL_SECONDS  HOME
 #
 
 configure_autostart() {
@@ -11,6 +12,7 @@ configure_autostart() {
     create_sync_helper
     create_mount_desktop
     create_sync_desktop
+    create_periodic_sync_timer
 }
 
 # ---------------------------------------------------------------------------
@@ -154,4 +156,80 @@ X-GNOME-Autostart-Delay=5
 DESKTOP
 
     ok "Autostart entry: ${desktop_file}"
+}
+
+# ---------------------------------------------------------------------------
+# create_periodic_sync_timer — systemd user timer for remote change detection
+#
+# RealTimeSync uses inotify to detect local changes instantly.
+# However, inotify does not fire for remote changes on the WebDAV server.
+# This timer runs FreeFileSync periodically to pull remote changes.
+#
+# Creates:
+#   ~/.config/systemd/user/mailbox-drive-sync.service
+#   ~/.config/systemd/user/mailbox-drive-sync.timer
+# ---------------------------------------------------------------------------
+
+create_periodic_sync_timer() {
+    local systemd_dir="${HOME}/.config/systemd/user"
+    local service_file="${systemd_dir}/mailbox-drive-sync.service"
+    local timer_file="${systemd_dir}/mailbox-drive-sync.timer"
+    local ffs_bin="${FREEFILESYNC_INSTALL_DIR}/FreeFileSync"
+    local batch_file="${FREEFILESYNC_INSTALL_DIR}/BatchRun.ffs_batch"
+
+    info "Creating periodic sync timer (every ${REMOTE_POLL_INTERVAL_SECONDS}s, low priority)..."
+    mkdir -p "${systemd_dir}"
+
+    # ── Service unit ─────────────────────────────────────────────────
+    cat > "${service_file}" << SERVICEUNIT
+[Unit]
+Description=mailbox.org Drive — periodic sync (pull remote changes)
+ConditionPathIsMountPoint=${MOUNT_POINT}
+
+[Service]
+Type=oneshot
+
+# Low priority — yield CPU and I/O to all other work
+Nice=19
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+
+ExecStart=${ffs_bin} ${batch_file}
+ExecCondition=/bin/sh -c '! pgrep -f "FreeFileSync.*BatchRun"'
+SuccessExitStatus=0 1 2 3
+SERVICEUNIT
+
+    ok "Service unit: ${service_file}"
+
+    # ── Timer unit ───────────────────────────────────────────────────
+    cat > "${timer_file}" << TIMERUNIT
+[Unit]
+Description=mailbox.org Drive — periodic sync timer
+
+[Timer]
+OnBootSec=120
+OnUnitActiveSec=${REMOTE_POLL_INTERVAL_SECONDS}
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target
+TIMERUNIT
+
+    ok "Timer unit: ${timer_file}"
+
+    # ── Enable and start ─────────────────────────────────────────────
+    systemctl --user daemon-reload
+
+    if systemctl --user enable mailbox-drive-sync.timer 2>/dev/null; then
+        ok "Timer enabled"
+    else
+        warn "Could not enable timer (systemd user session may not be active)"
+        warn "It will activate automatically on next login."
+    fi
+
+    if systemctl --user start mailbox-drive-sync.timer 2>/dev/null; then
+        ok "Timer started — syncing every ${REMOTE_POLL_INTERVAL_SECONDS}s (low priority)"
+    else
+        warn "Could not start timer now (will start on next login)"
+    fi
 }

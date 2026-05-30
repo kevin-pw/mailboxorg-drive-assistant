@@ -4,7 +4,7 @@
 #
 # Provides:  configure_sync
 # Requires:  SCRIPT_DIR  FREEFILESYNC_INSTALL_DIR  MOUNT_POINT  LOCAL_DIR
-#            MAILBOX_DISPLAY_NAME  FREEFILESYNC_DELAY_SECONDS
+#            MAILBOX_DISPLAY_NAME  LOCAL_SYNC_DELAY_SECONDS
 #
 
 configure_sync() {
@@ -49,7 +49,7 @@ render_template() {
         -e "s|__LOCAL_DIR__|$(sed_escape_replacement "${LOCAL_DIR}")|g" \
         -e "s|__DISPLAY_NAME__|$(sed_escape_replacement "${MAILBOX_DISPLAY_NAME}")|g" \
         -e "s|__FREEFILESYNC_INSTALL_DIR__|$(sed_escape_replacement "${FREEFILESYNC_INSTALL_DIR}")|g" \
-        -e "s|__DELAY_SECONDS__|$(sed_escape_replacement "${FREEFILESYNC_DELAY_SECONDS}")|g" \
+        -e "s|__DELAY_SECONDS__|$(sed_escape_replacement "${LOCAL_SYNC_DELAY_SECONDS}")|g" \
         "${template_file}" > "${output_file}"
 }
 

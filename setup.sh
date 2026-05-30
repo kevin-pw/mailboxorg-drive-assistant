@@ -37,7 +37,7 @@ if [[ "$EUID" -eq 0 ]]; then
 fi
 
 for f in VERSION \
-         drive.conf \
+         setup.conf \
          templates/BatchRun.ffs_batch \
          templates/BatchRun.ffs_real \
          scripts/install-deps.sh \
@@ -56,8 +56,8 @@ done
 # Load defaults and helper functions
 # ---------------------------------------------------------------------------
 
-# shellcheck source=drive.conf
-source "${SCRIPT_DIR}/drive.conf"
+# shellcheck source=setup.conf
+source "${SCRIPT_DIR}/setup.conf"
 
 # shellcheck source=scripts/install-deps.sh
 source "${SCRIPT_DIR}/scripts/install-deps.sh"
@@ -106,8 +106,11 @@ phase_configure() {
     read -rp "FreeFileSync install directory [${FREEFILESYNC_INSTALL_DIR}]: " input
     FREEFILESYNC_INSTALL_DIR="${input:-${FREEFILESYNC_INSTALL_DIR}}"
 
-    read -rp "RealTimeSync delay in seconds [${FREEFILESYNC_DELAY_SECONDS}]: " input
-    FREEFILESYNC_DELAY_SECONDS="${input:-${FREEFILESYNC_DELAY_SECONDS}}"
+    read -rp "Sync delay in seconds after detecting a local change [${LOCAL_SYNC_DELAY_SECONDS}]: " input
+    LOCAL_SYNC_DELAY_SECONDS="${input:-${LOCAL_SYNC_DELAY_SECONDS}}"
+
+    read -rp "Periodic remote poll interval in seconds [${REMOTE_POLL_INTERVAL_SECONDS}]: " input
+    REMOTE_POLL_INTERVAL_SECONDS="${input:-${REMOTE_POLL_INTERVAL_SECONDS}}"
 
     echo ""
     read -rp "mailbox.org email address: " MAILBOX_EMAIL
@@ -138,16 +141,17 @@ phase_configure() {
     echo "================================================"
     echo "   Configuration Summary"
     echo "================================================"
-    echo "  WebDAV URL:          ${WEBDAV_URL}"
-    echo "  Mount point:         ${MOUNT_POINT}"
-    echo "  Local directory:     ${LOCAL_DIR}"
-    echo "  Email:               ${MAILBOX_EMAIL}"
-    echo "  Password:            ********"
-    echo "  FreeFileSync:        v${FREEFILESYNC_VERSION}"
-    echo "  Install directory:   ${FREEFILESYNC_INSTALL_DIR}"
-    echo "  Sync delay:          ${FREEFILESYNC_DELAY_SECONDS}s"
-    echo "  System user:         ${CURRENT_USER}"
-    echo "  Display name:        (will be auto-detected)"
+    echo "  WebDAV URL:             ${WEBDAV_URL}"
+    echo "  Mount point:            ${MOUNT_POINT}"
+    echo "  Local directory:        ${LOCAL_DIR}"
+    echo "  Email:                  ${MAILBOX_EMAIL}"
+    echo "  Password:               ********"
+    echo "  FreeFileSync:           v${FREEFILESYNC_VERSION}"
+    echo "  Install directory:      ${FREEFILESYNC_INSTALL_DIR}"
+    echo "  Local sync delay:       ${LOCAL_SYNC_DELAY_SECONDS}s"
+    echo "  Remote poll interval:   ${REMOTE_POLL_INTERVAL_SECONDS}s"
+    echo "  System user:            ${CURRENT_USER}"
+    echo "  Display name:           (will be auto-detected)"
     echo "================================================"
     echo ""
 

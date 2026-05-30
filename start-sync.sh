@@ -15,8 +15,8 @@ ok()    { echo -e "\033[0;32m[ OK ]\033[0m  $*"; }
 warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
 err()   { echo -e "\033[0;31m[ERR ]\033[0m  $*" >&2; }
 
-# shellcheck source=drive.conf
-source "${SCRIPT_DIR}/drive.conf"
+# shellcheck source=setup.conf
+source "${SCRIPT_DIR}/setup.conf"
 
 version="$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo 'unknown')"
 info "mailbox.org Drive sync — version ${version}"

@@ -4,6 +4,8 @@ Automated setup for [mailbox.org Drive](https://mailbox.org) on Ubuntu Linux.
 
 mailbox.org Drive is a cloud-based file storage service. This repository contains shell scripts and configuration templates that automate the otherwise manual process of mounting a remote mailbox.org Drive via WebDAV, creating a synchronised local working directory, and configuring automatic background sync between the remote and local directories.
 
+> **Important:** Always save and edit files in the **local** directory (`~/mailboxorg_drive_local`), not directly in the remote mount. The remote mount is used by the sync process and should not be modified manually.
+
 ## How it works
 
 The setup creates two directories on your machine:
@@ -25,7 +27,24 @@ The local directory (`~/mailboxorg_drive_local`) is your actual working director
 - **Redundancy** — files exist in two places (local disk + mailbox.org cloud), protecting against data loss.
 - **Automatic sync** — no manual upload/download steps. Changes propagate in both directions.
 
-> **Important:** Always save and edit files in the **local** directory (`~/mailboxorg_drive_local`), not directly in the remote mount. The remote mount is used by the sync process and should not be modified manually.
+**How synchronisation works**
+
+Two complementary mechanisms ensure changes are caught in both directions:
+
+| Direction | Mechanism | Latency | How it works |
+|---|---|---|---|
+| Local → Remote | RealTimeSync (inotify) | ~1 second | Detects local file changes instantly via Linux kernel notifications |
+| Remote → Local | systemd timer | Configurable (default: 60s) | Periodically runs FreeFileSync to check for remote changes |
+
+Remote changes (e.g. files uploaded via the mailbox.org web interface or another device) cannot trigger instant notifications because the WebDAV mount does not support filesystem-level change events. The periodic timer compensates for this by polling at a configurable interval. The timer runs at the lowest CPU and I/O priority to avoid impacting other work.
+
+You can check the time remaining on the remote poll timer using the command:
+
+```bash
+systemctl --user status mailbox-drive-sync.timer
+# Expected output:
+# Trigger: Sat 2026-05-30 10:36:26 PDT; 13s left
+```
 
 ## Prerequisites
 
@@ -53,7 +72,7 @@ You will need:
 
 5. Copy the generated password and store it in your password manager — you will need it during Drive setup.
 
-> **Note:** App passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your account access.
+> **Note:** App passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your main login account access.
 
 ## Quickstart
 
@@ -81,7 +100,8 @@ The setup script will:
    | Local directory | `~/mailboxorg_drive_local` |
    | FreeFileSync version | `14.9` |
    | Install directory | `~/programs/FreeFileSync` |
-   | Sync delay | `1` second |
+   | Local sync delay | `5` seconds |
+   | Remote poll interval | `60` seconds |
 
 2. **Ask for your mailbox.org email and app password** — the password is entered securely (not shown on screen, not stored in shell history).
 
@@ -156,7 +176,7 @@ mailboxorg-drive-assistant/
 ├── README.md                          # This file
 ├── LICENSE                            # MIT License
 ├── VERSION                            # Current version of this assistant software
-├── drive.conf                         # Default configuration (no secrets)
+├── setup.conf                         # Default configuration (no secrets)
 ├── setup.sh                           # Main setup script
 ├── uninstall.sh                       # Complete removal script
 ├── start-sync.sh                      # Manual sync start/restart
@@ -185,6 +205,8 @@ mailboxorg-drive-assistant/
 | `~/.local/bin/start-realtimesync-mailbox` | Helper script to start RealTimeSync at login |
 | `~/.config/autostart/mount-mailbox-drive.desktop` | XDG autostart entry for mounting |
 | `~/.config/autostart/realtimesync-mailbox.desktop` | XDG autostart entry for sync |
+| `~/.config/systemd/user/mailbox-drive-sync.service` | systemd service for periodic remote polling |
+| `~/.config/systemd/user/mailbox-drive-sync.timer` | systemd timer that triggers periodic sync |
 
 ## Reference
 

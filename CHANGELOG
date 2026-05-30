@@ -1,0 +1,5 @@
+[v1.1.0]
+- feat: Added periodic remote polling feature to trigger sync when changes are detected on remote drive.
+
+[v1.0.0]
+- Initial commit of fully functional setup assistant.
