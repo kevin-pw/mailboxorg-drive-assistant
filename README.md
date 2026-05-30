@@ -39,7 +39,7 @@ The setup script will:
    | Local sync delay | `5` seconds |
    | Remote poll interval | `60` seconds |
 
-2. **Ask for your mailbox.org email and app password** — the password is entered securely (not shown on screen, not stored in shell history).
+2. **Ask for your mailbox.org email and application password** — the password is entered securely (not shown on screen, not stored in shell history).
 
 3. **Install davfs2** for WebDAV access.
 
@@ -67,7 +67,7 @@ After setup completes, you should see two red arrows in your taskbar indicating 
 IMPORTANT: Work and save files in your local drive directory to prevent data loss. Do not work in your remote directory directly as you might not be able to write files to the directory when an internet connection is not available.
 
 ```bash
-# Work in your local drive directory
+# Always work in your local drive directory. The default local directory is:
 ~/mailboxorg_drive_local
 ```
 
@@ -102,6 +102,7 @@ The uninstall script will:
 - Optionally remove the local sync directory (**warning: this deletes your local files**)
 - Optionally remove FreeFileSync (using its built-in uninstaller when available)
 - Optionally uninstall the davfs2 system package
+- Optionally uninstall the xvfb system package
 
 Each destructive action requires explicit confirmation. Safe to run even if the setup was only partially completed.
 
@@ -111,9 +112,9 @@ You will need:
 
 - **Ubuntu Linux** (tested on Ubuntu 26.04; should work on recent Ubuntu-based distributions)
 - **A mailbox.org account** with Drive access (available on all plans except the Light plan)
-- **An app password** for WebDAV access (do **not** use your main mailbox.org login password)
+- **An application password** for WebDAV access (do **not** use your main mailbox.org login password)
 
-### Creating an app password
+### Creating an application password
 
 1. Log in to your mailbox.org account at [https://login.mailbox.org](https://login.mailbox.org)
 
@@ -127,11 +128,11 @@ You will need:
 
 4. Under **Application**, select **WebDAV Client**. Enter a descriptive password name (for example `Drive_on_work_laptop`). Click **+ Add new password**.
 
-   ![Create a new WebDAV app password](assets/create-app-password3.jpg)
+   ![Create a new WebDAV application password](assets/create-app-password3.jpg)
 
 5. Copy the generated password and store it in your password manager — you will need it during Drive setup.
 
-> **Note:** App passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your main login account access.
+> **Note:** Application passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your main login account access.
 
 ## How it works
 
