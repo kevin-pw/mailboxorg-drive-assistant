@@ -237,3 +237,9 @@ The article covers manual setup of davfs2 WebDAV access and FreeFileSync synchro
 ## License
 
 [MIT](LICENSE)
+
+## Acknowledgements
+
+Developed by: [SciPlai Scientific Services Inc.](https://sciplai.com)
+
+Contact: [info@sciplai.com](mailto:info@sciplai.com)
