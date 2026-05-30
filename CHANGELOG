@@ -1,3 +1,6 @@
+[v1.2.0]
+- feat: Replaced periodic remote polling machanism with lightweight sentinel file touch to trigger sync.
+
 [v1.1.0]
 - feat: Added periodic remote polling feature to trigger sync when changes are detected on remote drive.
 

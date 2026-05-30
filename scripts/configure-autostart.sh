@@ -174,29 +174,30 @@ create_periodic_sync_timer() {
     local systemd_dir="${HOME}/.config/systemd/user"
     local service_file="${systemd_dir}/mailbox-drive-sync.service"
     local timer_file="${systemd_dir}/mailbox-drive-sync.timer"
-    local ffs_bin="${FREEFILESYNC_INSTALL_DIR}/FreeFileSync"
-    local batch_file="${FREEFILESYNC_INSTALL_DIR}/BatchRun.ffs_batch"
 
-    info "Creating periodic sync timer (every ${REMOTE_POLL_INTERVAL_SECONDS}s, low priority)..."
+    info "Creating periodic sync trigger (every ${REMOTE_POLL_INTERVAL_SECONDS}s, low priority)..."
     mkdir -p "${systemd_dir}"
 
     # ── Service unit ─────────────────────────────────────────────────
+    # Touches a sentinel file in the local sync directory.
+    # RealTimeSync (already running) detects this via inotify and
+    # triggers a normal sync cycle, which picks up remote changes.
+    # The sentinel file is excluded in BatchRun.ffs_batch so it is
+    # never synced to the remote drive.
     cat > "${service_file}" << SERVICEUNIT
 [Unit]
-Description=mailbox.org Drive — periodic sync (pull remote changes)
+Description=mailbox.org Drive — trigger sync to pull remote changes
 ConditionPathIsMountPoint=${MOUNT_POINT}
 
 [Service]
 Type=oneshot
 
-# Low priority — yield CPU and I/O to all other work
+# Low priority
 Nice=19
 IOSchedulingClass=idle
 IOSchedulingPriority=7
 
-ExecStart=${ffs_bin} ${batch_file}
-ExecCondition=/bin/sh -c '! pgrep -f "FreeFileSync.*BatchRun"'
-SuccessExitStatus=0 1 2 3
+ExecStart=/usr/bin/touch ${LOCAL_DIR}/.sync-trigger
 SERVICEUNIT
 
     ok "Service unit: ${service_file}"
@@ -204,7 +205,7 @@ SERVICEUNIT
     # ── Timer unit ───────────────────────────────────────────────────
     cat > "${timer_file}" << TIMERUNIT
 [Unit]
-Description=mailbox.org Drive — periodic sync timer
+Description=mailbox.org Drive — periodic sync trigger timer
 
 [Timer]
 OnBootSec=120
@@ -228,7 +229,7 @@ TIMERUNIT
     fi
 
     if systemctl --user start mailbox-drive-sync.timer 2>/dev/null; then
-        ok "Timer started — syncing every ${REMOTE_POLL_INTERVAL_SECONDS}s (low priority)"
+        ok "Timer started — triggering sync every ${REMOTE_POLL_INTERVAL_SECONDS}s (low priority)"
     else
         warn "Could not start timer now (will start on next login)"
     fi

@@ -21,6 +21,7 @@
         <Exclude>
             <Item>*/.Trash-*/</Item>
             <Item>*/.recycle/</Item>
+            <Item>*/.sync-trigger</Item>
         </Exclude>
         <SizeMin Unit="None">0</SizeMin>
         <SizeMax Unit="None">0</SizeMax>

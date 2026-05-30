@@ -6,75 +6,11 @@ mailbox.org Drive is a cloud-based file storage service. This repository contain
 
 > **Important:** Always save and edit files in the **local** directory (`~/mailboxorg_drive_local`), not directly in the remote mount. The remote mount is used by the sync process and should not be modified manually.
 
-## How it works
-
-The setup creates two directories on your machine:
-
-| Directory | Purpose |
-|---|---|
-| `/media/mailboxorg_drive_remote` | A WebDAV mount of your mailbox.org Drive (online) |
-| `~/mailboxorg_drive_local` | Your local working directory |
-
-[FreeFileSync](https://freefilesync.org/) and its companion tool RealTimeSync keep these two directories synchronised in the background.
-
-**Why two directories?**
-
-The remote mount (`/media/mailboxorg_drive_remote`) requires an active internet connection. If your device goes offline then any files you save there become inaccessible or fail to sync.
-
-The local directory (`~/mailboxorg_drive_local`) is your actual working directory. Files saved here are always available on your local disk, regardless of connectivity. When the internet is available, RealTimeSync automatically detects changes and synchronises them to the remote drive. This gives you:
-
-- **Offline resilience** — continue working without interruption during connectivity gaps.
-- **Redundancy** — files exist in two places (local disk + mailbox.org cloud), protecting against data loss.
-- **Automatic sync** — no manual upload/download steps. Changes propagate in both directions.
-
-**How synchronisation works**
-
-Two complementary mechanisms ensure changes are caught in both directions:
-
-| Direction | Mechanism | Latency | How it works |
-|---|---|---|---|
-| Local → Remote | RealTimeSync (inotify) | ~1 second | Detects local file changes instantly via Linux kernel notifications |
-| Remote → Local | systemd timer | Configurable (default: 60s) | Periodically runs FreeFileSync to check for remote changes |
-
-Remote changes (e.g. files uploaded via the mailbox.org web interface or another device) cannot trigger instant notifications because the WebDAV mount does not support filesystem-level change events. The periodic timer compensates for this by polling at a configurable interval. The timer runs at the lowest CPU and I/O priority to avoid impacting other work.
-
-You can check the time remaining on the remote poll timer using the command:
-
-```bash
-systemctl --user status mailbox-drive-sync.timer
-# Expected output:
-# Trigger: Sat 2026-05-30 10:36:26 PDT; 13s left
-```
-
-## Prerequisites
-
-You will need:
-
-- **Ubuntu Linux** (tested on Ubuntu 26.04; should work on recent Ubuntu-based distributions)
-- **A mailbox.org account** with Drive access (available on all plans except the Light plan)
-- **An app password** for WebDAV access (do **not** use your main mailbox.org login password)
-
-### Creating an app password
-
-1. Log in to your mailbox.org account at [https://login.mailbox.org](https://login.mailbox.org)
-
-2. Click the **gear icon** (⚙) in the top-right corner, then select **All settings...**
-
-   ![Navigate to All Settings](assets/create-app-password1.jpg)
-
-3. In the left sidebar, select **Security**. Then scroll down and click **Application Passwords**.
-
-   ![Security settings — Application Passwords](assets/create-app-password2.jpg)
-
-4. Under **Application**, select **WebDAV Client**. Enter a descriptive password name (for example `Drive_on_work_laptop`). Click **+ Add new password**.
-
-   ![Create a new WebDAV app password](assets/create-app-password3.jpg)
-
-5. Copy the generated password and store it in your password manager — you will need it during Drive setup.
-
-> **Note:** App passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your main login account access.
-
 ## Quickstart
+
+### 0. Create a WebDAV application password in your mailbox.org account
+
+See section "Prerequisites" below for detailed instructions.
 
 ### 1. Clone the repository
 
@@ -169,6 +105,74 @@ The uninstall script will:
 
 Each destructive action requires explicit confirmation. Safe to run even if the setup was only partially completed.
 
+## Prerequisites
+
+You will need:
+
+- **Ubuntu Linux** (tested on Ubuntu 26.04; should work on recent Ubuntu-based distributions)
+- **A mailbox.org account** with Drive access (available on all plans except the Light plan)
+- **An app password** for WebDAV access (do **not** use your main mailbox.org login password)
+
+### Creating an app password
+
+1. Log in to your mailbox.org account at [https://login.mailbox.org](https://login.mailbox.org)
+
+2. Click the **gear icon** (⚙) in the top-right corner, then select **All settings...**
+
+   ![Navigate to All Settings](assets/create-app-password1.jpg)
+
+3. In the left sidebar, select **Security**. Then scroll down and click **Application Passwords**.
+
+   ![Security settings — Application Passwords](assets/create-app-password2.jpg)
+
+4. Under **Application**, select **WebDAV Client**. Enter a descriptive password name (for example `Drive_on_work_laptop`). Click **+ Add new password**.
+
+   ![Create a new WebDAV app password](assets/create-app-password3.jpg)
+
+5. Copy the generated password and store it in your password manager — you will need it during Drive setup.
+
+> **Note:** App passwords are separate from your main login password. They do not require a second factor login and can be deleted individually without affecting your main login account access.
+
+## How it works
+
+The setup creates two directories on your machine:
+
+| Directory | Purpose |
+|---|---|
+| `/media/mailboxorg_drive_remote` | A WebDAV mount of your mailbox.org Drive (online) |
+| `~/mailboxorg_drive_local` | Your local working directory |
+
+[FreeFileSync](https://freefilesync.org/) and its companion tool RealTimeSync keep these two directories synchronised in the background.
+
+**Why two directories?**
+
+The remote mount (`/media/mailboxorg_drive_remote`) requires an active internet connection. If your device goes offline then any files you save there become inaccessible or fail to sync.
+
+The local directory (`~/mailboxorg_drive_local`) is your actual working directory. Files saved here are always available on your local disk, regardless of connectivity. When the internet is available, RealTimeSync automatically detects changes and synchronises them to the remote drive. This gives you:
+
+- **Offline resilience** — continue working without interruption during connectivity gaps.
+- **Redundancy** — files exist in two places (local disk + mailbox.org cloud), protecting against data loss.
+- **Automatic sync** — no manual upload/download steps. Changes propagate in both directions.
+
+**How synchronisation works**
+
+Two complementary mechanisms ensure changes are caught in both directions:
+
+| Direction | Mechanism | Latency | How it works |
+|---|---|---|---|
+| Local → Remote | RealTimeSync (inotify) | ~1 second | Detects local file changes instantly via Linux kernel notifications |
+| Remote → Local | systemd timer + inotify | Configurable (default: 60s) | Periodically touches a sentinel file (`.sync-trigger`) in the local directory, which inotify detects, causing RealTimeSync to trigger a full bidirectional sync that picks up remote changes |
+
+Remote changes (e.g. files uploaded via the mailbox.org web interface or another device) cannot trigger instant notifications because the WebDAV mount does not support filesystem-level change events. The periodic timer compensates by touching a local sentinel file at a configurable interval. RealTimeSync detects this touch via inotify and runs a normal sync cycle, which compares both directories and pulls down any remote changes. The sentinel file is excluded from synchronisation so it is never uploaded to the remote drive. The timer runs at the lowest CPU and I/O priority to avoid impacting other work.
+
+You can check the time remaining on the remote poll timer using the command:
+
+```bash
+systemctl --user status mailbox-drive-sync.timer
+# Expected output:
+# Trigger: Sat 2026-05-30 10:36:26 PDT; 13s left
+```
+
 ## Repository contents
 
 ```
@@ -176,7 +180,8 @@ mailboxorg-drive-assistant/
 ├── README.md                          # This file
 ├── LICENSE                            # MIT License
 ├── VERSION                            # Current version of this assistant software
-├── setup.conf                         # Default configuration (no secrets)
+├── CHANGELOG                          # Documents changes made to each version of this assistant software
+├── setup.conf                         # Default configuration
 ├── setup.sh                           # Main setup script
 ├── uninstall.sh                       # Complete removal script
 ├── start-sync.sh                      # Manual sync start/restart
