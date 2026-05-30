@@ -5,5 +5,5 @@
         <Item>__MOUNT_POINT__/__DISPLAY_NAME__</Item>
     </Directories>
     <Delay>__DELAY_SECONDS__</Delay>
-    <Commandline>__FREEFILESYNC_INSTALL_DIR__/FreeFileSync __FREEFILESYNC_INSTALL_DIR__/BatchRun.ffs_batch</Commandline>
+    <Commandline>xvfb-run -a __FREEFILESYNC_INSTALL_DIR__/FreeFileSync __FREEFILESYNC_INSTALL_DIR__/BatchRun.ffs_batch</Commandline>
 </FreeFileSync>

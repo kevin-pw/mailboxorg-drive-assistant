@@ -8,6 +8,7 @@
 
 install_dependencies() {
     install_davfs2
+    install_xvfb
     install_freefilesync
 }
 
@@ -32,6 +33,24 @@ install_davfs2() {
     fi
 
     ok "davfs2 installed"
+}
+
+install_xvfb() {
+    if dpkg-query -W -f='${Status}' xvfb 2>/dev/null \
+            | grep -q "install ok installed"; then
+        ok "xvfb is already installed"
+        return 0
+    fi
+
+    info "Installing xvfb (virtual framebuffer for headless sync)..."
+
+    if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb; then
+        info "Retrying after apt-get update..."
+        sudo apt-get update -qq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb
+    fi
+
+    ok "xvfb installed"
 }
 
 # ---------------------------------------------------------------------------

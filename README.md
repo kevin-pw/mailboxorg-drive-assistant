@@ -165,6 +165,8 @@ Two complementary mechanisms ensure changes are caught in both directions:
 
 Remote changes (e.g. files uploaded via the mailbox.org web interface or another device) cannot trigger instant notifications because the WebDAV mount does not support filesystem-level change events. The periodic timer compensates by touching a local sentinel file at a configurable interval. RealTimeSync detects this touch via inotify and runs a normal sync cycle, which compares both directories and pulls down any remote changes. The sentinel file is excluded from synchronisation so it is never uploaded to the remote drive. The timer runs at the lowest CPU and I/O priority to avoid impacting other work.
 
+When RealTimeSync triggers a sync, it launches FreeFileSync via `xvfb-run` (a virtual framebuffer wrapper). This prevents the FreeFileSync progress dialog and system tray icon from briefly appearing on screen during each sync cycle, keeping the remote sync polling invisible to the user.
+
 You can check the time remaining on the remote poll timer using the command:
 
 ```bash
@@ -228,6 +230,7 @@ The article covers manual setup of davfs2 WebDAV access and FreeFileSync synchro
 | [davfs2](https://savannah.nongnu.org/projects/davfs2) | Mounts WebDAV shares as local filesystems via FUSE |
 | [FreeFileSync](https://freefilesync.org/) | Open-source file synchronisation tool |
 | [RealTimeSync](https://freefilesync.org/) | Companion to FreeFileSync; monitors directories and triggers sync on changes |
+| [xvfb](https://www.x.org/releases/X11R7.6/doc/man/man1/Xvfb.1.xhtml) | Virtual framebuffer; runs FreeFileSync headlessly so no GUI elements appear on screen during sync |
 | [mailbox.org Drive](https://mailbox.org) | Cloud storage with WebDAV access |
 
 ## License

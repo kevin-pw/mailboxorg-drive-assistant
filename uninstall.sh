@@ -283,7 +283,7 @@ if [[ -d "${FREEFILESYNC_INSTALL_DIR}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Optionally uninstall davfs2 system package
+# Optionally uninstall system packages
 # ---------------------------------------------------------------------------
 
 echo ""
@@ -291,6 +291,12 @@ read -rp "Uninstall davfs2 system package? [y/N]: " choice
 if [[ "${choice,,}" =~ ^y ]]; then
     sudo apt-get remove -y davfs2
     ok "davfs2 package removed"
+fi
+
+read -rp "Uninstall xvfb (virtual framebuffer)? [y/N]: " choice
+if [[ "${choice,,}" =~ ^y ]]; then
+    sudo apt-get remove -y xvfb
+    ok "xvfb package removed"
 fi
 
 # ---------------------------------------------------------------------------

@@ -1,3 +1,6 @@
+[v1.3.0]
+- feat: Implemented use of 'xvfb-run -a' when running 'FreeFileSync' to prevent system tray icon from appearing on each remote polling event.
+
 [v1.2.0]
 - feat: Replaced periodic remote polling machanism with lightweight sentinel file touch to trigger sync.
 
