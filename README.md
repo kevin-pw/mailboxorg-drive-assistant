@@ -152,9 +152,10 @@ Each destructive action requires explicit confirmation. Safe to run even if the 
 ## Repository contents
 
 ```
-mailbox-drive-assistant/
+mailboxorg-drive-assistant/
 ├── README.md                          # This file
 ├── LICENSE                            # MIT License
+├── VERSION                            # Current version of this assistant software
 ├── drive.conf                         # Default configuration (no secrets)
 ├── setup.sh                           # Main setup script
 ├── uninstall.sh                       # Complete removal script

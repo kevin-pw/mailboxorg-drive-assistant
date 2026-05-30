@@ -30,7 +30,7 @@ configure_davfs_conf() {
 
     sudo tee "${conf_file}" > /dev/null << 'DAVFS2CONF'
 # /etc/davfs2/davfs2.conf
-# Configured by mailbox-drive-assistant for mailbox.org
+# Configured by mailboxorg-drive-assistant for mailbox.org
 # Original file backed up as davfs2.conf.orig
 #
 # Settings not listed here use davfs2 built-in defaults.
