@@ -60,8 +60,8 @@ You will need:
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url> mailboxorg-drive-assistant
-cd mailbox-drive-assistant
+git clone https://github.com/kevin-pw/mailboxorg-drive-assistant.git 
+cd mailboxorg-drive-assistant
 ```
 
 ### 2. Run the setup
